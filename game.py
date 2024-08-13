@@ -1,5 +1,5 @@
-import pygame
 import math
+import pygame
 
 pygame.init()
 
@@ -13,7 +13,7 @@ VERMELHO = (255, 0, 0)
 AZUL = (0, 0, 255)
 VERDE = (0, 255, 0)
 
-GRAVIDADE = 400  
+GRAVIDADE = 700
 
 class Projetil:
     def __init__(self, x, y):
@@ -32,7 +32,13 @@ class Projetil:
             self.posicao[0] += self.velocidade[0] * dt
             self.posicao[1] += self.velocidade[1] * dt
 
+            # Verificar colisão com o chão
             if self.posicao[1] + self.raio >= ALTURA:
+                self.movendo = False
+            
+            # Verificar se ultrapassou os limites da tela
+            if (self.posicao[0] < 0 or self.posicao[0] > LARGURA or
+                self.posicao[1] < 0 or self.posicao[1] > ALTURA):
                 self.movendo = False
 
 class Cano:
@@ -96,12 +102,16 @@ def main():
                 rodando = False
             elif evento.type == pygame.MOUSEBUTTONDOWN and not projetil.movendo:
                 canhao.ajustar_angulo(pygame.mouse.get_pos())
-                potencia = 500
+                potencia = 700
                 projetil.velocidade[0] = potencia * math.cos(canhao.angulo)
                 projetil.velocidade[1] = -potencia * math.sin(canhao.angulo)
                 projetil.movendo = True
         
         projetil.atualizar(dt)
+        
+        # Verificar se o projetil saiu da tela
+        if not projetil.movendo:
+            reiniciar_jogo(projetil, canhao)
         
         tela.fill(PRETO)
         canhao.desenhar(tela)
