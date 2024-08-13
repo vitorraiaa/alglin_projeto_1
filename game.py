@@ -80,7 +80,29 @@ def reiniciar_jogo(projetil, canhao):
     projetil.velocidade = [0, 0]
     projetil.movendo = False
 
+def tela_inicio():
+    fonte = pygame.font.Font(None, 74)
+    texto_iniciar = fonte.render("Iniciar", True, BRANCO)
+    rect_iniciar = texto_iniciar.get_rect(center=(LARGURA // 2, ALTURA // 2))
+
+    rodando = True
+    while rodando:
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                return False
+            elif evento.type == pygame.MOUSEBUTTONDOWN:
+                if rect_iniciar.collidepoint(evento.pos):
+                    return True
+
+        tela.fill(PRETO)
+        tela.blit(texto_iniciar, rect_iniciar)
+        pygame.display.flip()
+
 def main():
+    if not tela_inicio():
+        return
+
     relogio = pygame.time.Clock()
     rodando = True
     
@@ -104,9 +126,8 @@ def main():
                 pos_mouse = pygame.mouse.get_pos()
                 canhao.ajustar_angulo(pos_mouse)
                 
-                
-                distancia_horizontal = max(100, pos_mouse[0] - canhao.x)  +100
-                potencia = min(100000, distancia_horizontal)  +100
+                distancia_horizontal = max(100, pos_mouse[0] - canhao.x) + 200
+                potencia = min(1000, distancia_horizontal) + 200
                 
                 projetil.velocidade[0] = potencia * math.cos(canhao.angulo)
                 projetil.velocidade[1] = -potencia * math.sin(canhao.angulo)
@@ -114,7 +135,6 @@ def main():
         
         projetil.atualizar(dt)
         
-       
         if not projetil.movendo:
             reiniciar_jogo(projetil, canhao)
         
