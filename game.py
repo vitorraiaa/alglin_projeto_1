@@ -101,15 +101,20 @@ def main():
             if evento.type == pygame.QUIT:
                 rodando = False
             elif evento.type == pygame.MOUSEBUTTONDOWN and not projetil.movendo:
-                canhao.ajustar_angulo(pygame.mouse.get_pos())
-                potencia = 700
+                pos_mouse = pygame.mouse.get_pos()
+                canhao.ajustar_angulo(pos_mouse)
+                
+                
+                distancia_horizontal = max(100, pos_mouse[0] - canhao.x)  +100
+                potencia = min(100000, distancia_horizontal)  +100
+                
                 projetil.velocidade[0] = potencia * math.cos(canhao.angulo)
                 projetil.velocidade[1] = -potencia * math.sin(canhao.angulo)
                 projetil.movendo = True
         
         projetil.atualizar(dt)
         
-        # Verificar se o projetil saiu da tela
+       
         if not projetil.movendo:
             reiniciar_jogo(projetil, canhao)
         
