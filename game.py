@@ -12,8 +12,27 @@ BRANCO = (255, 255, 255)
 VERMELHO = (255, 0, 0)
 AZUL = (0, 0, 255)
 VERDE = (0, 255, 0)
+AMARELO = (255, 255, 0)
 
 GRAVIDADE = 700
+G = 0.10
+
+class Vetor:
+    def modulo(vetor):
+        return math.sqrt(vetor[0]**2 + vetor[1]**2)
+    
+    def normalizar(vetor):
+        modulo = Vetor.modulo(vetor)
+        if modulo == 0:
+            return [0, 0]
+        return [vetor[0] / modulo, vetor[1] / modulo]
+    
+
+    def escalar(vetor, escalar):
+        return [vetor[0] * escalar, vetor[1] * escalar]
+    
+    def somar(vetor1, vetor2):
+        return [vetor1[0] + vetor2[0], vetor1[1] + vetor2[1]]
 
 class Projetil:
     def __init__(self, x, y):
@@ -28,15 +47,17 @@ class Projetil:
     
     def atualizar(self, dt):
         if self.movendo:
-            self.velocidade[1] += GRAVIDADE * dt
-            self.posicao[0] += self.velocidade[0] * dt
-            self.posicao[1] += self.velocidade[1] * dt
 
-            # Verificar colisão com o chão
+            self.posicao = Vetor.somar(self.posicao, Vetor.escalar(self.velocidade, dt))
+
+            gravidade_vetor = [0, GRAVIDADE * dt]
+            self.velocidade = Vetor.somar(self.velocidade, gravidade_vetor)
+
+    
             if self.posicao[1] + self.raio >= ALTURA:
                 self.movendo = False
             
-            # Verificar se ultrapassou os limites da tela
+
             if (self.posicao[0] < 0 or self.posicao[0] > LARGURA or
                 self.posicao[1] < 0 or self.posicao[1] > ALTURA):
                 self.movendo = False
@@ -74,6 +95,36 @@ class Alvo:
     
     def desenhar(self, tela):
         pygame.draw.rect(tela, self.cor, self.rect)
+
+class Planeta:
+    def __init__(self, x, y, massa, raio):
+        self.x = x
+        self.y = y
+        self.massa = massa
+        self.raio = raio
+        self.cor = AMARELO
+    
+    def desenhar(self, tela):
+        pygame.draw.circle(tela, self.cor, (self.x, self.y), self.raio)
+    
+    def aplicar_gravidade(self, projetil, dt):
+
+        direcao = [self.x - projetil.posicao[0], self.y - projetil.posicao[1]]
+        distancia = Vetor.modulo(direcao)
+        
+        if distancia > 0:
+
+            direcao_normalizada = Vetor.normalizar(direcao)
+
+            forca = G * self.massa / (distancia**2)
+
+            aceleracao = Vetor.escalar(direcao_normalizada, forca * dt)
+
+            projetil.velocidade = Vetor.somar(projetil.velocidade, aceleracao)
+    
+    def verificar_colisao(self, projetil):
+        distancia = Vetor.modulo([self.x - projetil.posicao[0], self.y - projetil.posicao[1]])
+        return distancia <= self.raio + projetil.raio
 
 def reiniciar_jogo(projetil, canhao):
     projetil.posicao = [canhao.x, canhao.y]
@@ -116,6 +167,8 @@ def main():
     
     alvo = Alvo(750, ALTURA - 50, 50, 50)
     
+    planeta = Planeta(500, ALTURA // 2, massa=5e6, raio=30)
+    
     while rodando:
         dt = relogio.tick(60) / 1000.0
         
@@ -126,12 +179,19 @@ def main():
                 pos_mouse = pygame.mouse.get_pos()
                 canhao.ajustar_angulo(pos_mouse)
                 
+
+                direcao = [math.cos(canhao.angulo), -math.sin(canhao.angulo)]
+
+                direcao_normalizada = Vetor.normalizar(direcao)
+
                 distancia_horizontal = max(100, pos_mouse[0] - canhao.x) + 200
                 potencia = min(1000, distancia_horizontal) + 200
-                
-                projetil.velocidade[0] = potencia * math.cos(canhao.angulo)
-                projetil.velocidade[1] = -potencia * math.sin(canhao.angulo)
+
+                projetil.velocidade = Vetor.escalar(direcao_normalizada, potencia)
                 projetil.movendo = True
+        
+        if projetil.movendo:
+            planeta.aplicar_gravidade(projetil, dt)
         
         projetil.atualizar(dt)
         
@@ -143,13 +203,17 @@ def main():
         projetil.desenhar(tela)
         alvo.desenhar(tela)
         
+        planeta.desenhar(tela)
+        
         for obstaculo in obstaculos:
             obstaculo.desenhar(tela)
             if projetil.movendo and obstaculo.rect.colliderect(pygame.Rect(projetil.posicao[0] - projetil.raio, projetil.posicao[1] - projetil.raio, projetil.raio*2, projetil.raio*2)):
                 reiniciar_jogo(projetil, canhao)
         
+        if projetil.movendo and planeta.verificar_colisao(projetil):
+            reiniciar_jogo(projetil, canhao)
+        
         if projetil.movendo and alvo.rect.colliderect(pygame.Rect(projetil.posicao[0] - projetil.raio, projetil.posicao[1] - projetil.raio, projetil.raio*2, projetil.raio*2)):
-            print("Acertou o alvo!")
             rodando = False
         
         pygame.display.flip()
