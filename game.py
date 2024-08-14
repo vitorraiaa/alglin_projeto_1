@@ -18,46 +18,50 @@ GRAVIDADE = 700
 G = 0.10
 
 class Vetor:
+    @staticmethod
     def modulo(vetor):
         return math.sqrt(vetor[0]**2 + vetor[1]**2)
     
+    @staticmethod
     def normalizar(vetor):
         modulo = Vetor.modulo(vetor)
         if modulo == 0:
             return [0, 0]
         return [vetor[0] / modulo, vetor[1] / modulo]
     
-
+    @staticmethod
     def escalar(vetor, escalar):
         return [vetor[0] * escalar, vetor[1] * escalar]
     
+    @staticmethod
     def somar(vetor1, vetor2):
         return [vetor1[0] + vetor2[0], vetor1[1] + vetor2[1]]
 
 class Projetil:
-    def __init__(self, x, y):
+    def __init__(self, x, y, sprite):
         self.posicao = [x, y]
         self.raio = 10
         self.cor = VERMELHO
         self.velocidade = [0, 0]
         self.movendo = False
+        self.sprite = pygame.transform.scale(sprite, (self.raio * 2, self.raio * 2))  # Redimensionar a sprite
     
     def desenhar(self, tela):
-        pygame.draw.circle(tela, self.cor, (int(self.posicao[0]), int(self.posicao[1])), self.raio)
+        tela.blit(self.sprite, (int(self.posicao[0]) - self.raio, int(self.posicao[1]) - self.raio))
     
     def atualizar(self, dt):
         if self.movendo:
-
+            # Atualizar posição com base na velocidade
             self.posicao = Vetor.somar(self.posicao, Vetor.escalar(self.velocidade, dt))
-
+            # Aplicar gravidade ao vetor de velocidade
             gravidade_vetor = [0, GRAVIDADE * dt]
             self.velocidade = Vetor.somar(self.velocidade, gravidade_vetor)
 
-    
+            # Verificar colisão com o chão
             if self.posicao[1] + self.raio >= ALTURA:
                 self.movendo = False
             
-
+            # Verificar se ultrapassou os limites da tela
             if (self.posicao[0] < 0 or self.posicao[0] > LARGURA or
                 self.posicao[1] < 0 or self.posicao[1] > ALTURA):
                 self.movendo = False
@@ -108,18 +112,18 @@ class Planeta:
         pygame.draw.circle(tela, self.cor, (self.x, self.y), self.raio)
     
     def aplicar_gravidade(self, projetil, dt):
-
+        # Calcular o vetor direção do planeta para o projétil
         direcao = [self.x - projetil.posicao[0], self.y - projetil.posicao[1]]
         distancia = Vetor.modulo(direcao)
         
         if distancia > 0:
-
+            # Normalizar o vetor direção
             direcao_normalizada = Vetor.normalizar(direcao)
-
+            # Calcular a força gravitacional
             forca = G * self.massa / (distancia**2)
-
+            # Multiplicar a direção normalizada pela força e dt para obter o vetor de aceleração
             aceleracao = Vetor.escalar(direcao_normalizada, forca * dt)
-
+            # Atualizar a velocidade do projétil
             projetil.velocidade = Vetor.somar(projetil.velocidade, aceleracao)
     
     def verificar_colisao(self, projetil):
@@ -157,8 +161,11 @@ def main():
     relogio = pygame.time.Clock()
     rodando = True
     
+    # Carregar a sprite
+    sprite_projetil = pygame.image.load('angry_birds.png').convert_alpha()
+    
     canhao = Cano(100, ALTURA - 100)
-    projetil = Projetil(canhao.x, canhao.y)
+    projetil = Projetil(canhao.x, canhao.y, sprite_projetil)
     
     obstaculos = [
         Obstaculo(400, ALTURA - 150, 50, 150),
@@ -179,14 +186,14 @@ def main():
                 pos_mouse = pygame.mouse.get_pos()
                 canhao.ajustar_angulo(pos_mouse)
                 
-
+                # Definir vetor de direção baseado no ângulo do canhão
                 direcao = [math.cos(canhao.angulo), -math.sin(canhao.angulo)]
-
+                # Normalizar o vetor direção
                 direcao_normalizada = Vetor.normalizar(direcao)
-
+                # Definir a potência do tiro
                 distancia_horizontal = max(100, pos_mouse[0] - canhao.x) + 200
                 potencia = min(1000, distancia_horizontal) + 200
-
+                # Multiplicar a direção normalizada pela potência para obter a velocidade inicial
                 projetil.velocidade = Vetor.escalar(direcao_normalizada, potencia)
                 projetil.movendo = True
         
