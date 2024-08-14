@@ -15,7 +15,7 @@ VERDE = (0, 255, 0)
 AMARELO = (255, 255, 0)
 
 GRAVIDADE = 700
-G = 0.10
+G = 0.6
 
 class Vetor:
     def modulo(vetor):
@@ -38,29 +38,30 @@ class Projetil:
     def __init__(self, x, y):
         self.posicao = [x, y]
         self.raio = 10
-        self.cor = VERMELHO
         self.velocidade = [0, 0]
         self.movendo = False
+
+        self.imagem = pygame.image.load("img/bola-grena-verde.webp")
+        self.imagem = pygame.transform.scale(self.imagem, (self.raio * 2, self.raio * 2))
     
     def desenhar(self, tela):
-        pygame.draw.circle(tela, self.cor, (int(self.posicao[0]), int(self.posicao[1])), self.raio)
+        posicao_imagem = (int(self.posicao[0] - self.raio), int(self.posicao[1] - self.raio))
+        tela.blit(self.imagem, posicao_imagem)
     
     def atualizar(self, dt):
         if self.movendo:
-
             self.posicao = Vetor.somar(self.posicao, Vetor.escalar(self.velocidade, dt))
 
             gravidade_vetor = [0, GRAVIDADE * dt]
             self.velocidade = Vetor.somar(self.velocidade, gravidade_vetor)
-
     
             if self.posicao[1] + self.raio >= ALTURA:
                 self.movendo = False
             
-
             if (self.posicao[0] < 0 or self.posicao[0] > LARGURA or
                 self.posicao[1] < 0 or self.posicao[1] > ALTURA):
                 self.movendo = False
+
 
 class Cano:
     def __init__(self, x, y):
@@ -102,10 +103,13 @@ class Planeta:
         self.y = y
         self.massa = massa
         self.raio = raio
-        self.cor = AMARELO
+        self.imagem = pygame.image.load("img\png-clipart-earth-saturn-the-ringed-planet-earth-purple-desktop-wallpaper.png")
+        self.imagem = pygame.transform.scale(self.imagem, (self.raio * 2, self.raio * 2))
     
     def desenhar(self, tela):
-        pygame.draw.circle(tela, self.cor, (self.x, self.y), self.raio)
+        posicao_imagem = (int(self.x - self.raio), int(self.y - self.raio))
+        tela.blit(self.imagem, posicao_imagem)
+
     
     def aplicar_gravidade(self, projetil, dt):
 
@@ -179,16 +183,18 @@ def main():
                 pos_mouse = pygame.mouse.get_pos()
                 canhao.ajustar_angulo(pos_mouse)
                 
-
+                
                 direcao = [math.cos(canhao.angulo), -math.sin(canhao.angulo)]
-
                 direcao_normalizada = Vetor.normalizar(direcao)
 
-                distancia_horizontal = max(100, pos_mouse[0] - canhao.x) + 200
-                potencia = min(1000, distancia_horizontal) + 200
+                distancia_horizontal = max(100, pos_mouse[0] - canhao.x) * 2 + 100  
+                
+                potencia = min(2000, distancia_horizontal)  
 
+                
                 projetil.velocidade = Vetor.escalar(direcao_normalizada, potencia)
                 projetil.movendo = True
+
         
         if projetil.movendo:
             planeta.aplicar_gravidade(projetil, dt)
