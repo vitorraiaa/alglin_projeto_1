@@ -84,10 +84,12 @@ class Cano:
 class Obstaculo:
     def __init__(self, x, y, largura, altura):
         self.rect = pygame.Rect(x, y, largura, altura)
-        self.cor = AZUL
-    
+        self.imagem = pygame.image.load("img\Blue_birds_2.webp")
+        self.imagem = pygame.transform.scale(self.imagem, (largura, altura))
+
     def desenhar(self, tela):
-        pygame.draw.rect(tela, self.cor, self.rect)
+        tela.blit(self.imagem, self.rect.topleft)
+
 
 class Alvo:
     def __init__(self, x, y, largura, altura):
