@@ -138,11 +138,24 @@ def reiniciar_jogo(projetil, canhao):
     projetil.movendo = False
 
 def tela_inicio():
+    # Carregar uma imagem de fundo
+    fundo = pygame.image.load("img/transferir.jpg")
+    fundo = pygame.transform.scale(fundo, (LARGURA, ALTURA))
+    
+    # Sprite animado do projetil
+    projetil_sprite = pygame.image.load("img/bola-grena-verde.webp")
+    projetil_sprite = pygame.transform.scale(projetil_sprite, (50, 50))
+    
+    # Fonte e cor do texto
     fonte = pygame.font.Font(None, 74)
     texto_iniciar = fonte.render("Iniciar", True, BRANCO)
     rect_iniciar = texto_iniciar.get_rect(center=(LARGURA // 2, ALTURA // 2))
 
     rodando = True
+    angulo_projetil = 0
+    raio_circulo = 100
+    velocidade_angular = 0.0005  # Velocidade de movimento circular
+    
     while rodando:
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
@@ -152,9 +165,26 @@ def tela_inicio():
                 if rect_iniciar.collidepoint(evento.pos):
                     return True
 
-        tela.fill(PRETO)
-        tela.blit(texto_iniciar, rect_iniciar)
+        # Atualizar ângulo e posição circular
+        angulo_projetil += velocidade_angular
+        x_projetil = LARGURA // 2 + raio_circulo * math.cos(angulo_projetil)
+        y_projetil = ALTURA // 2 + raio_circulo * math.sin(angulo_projetil)
+
+        # Desenhar na tela
+        tela.blit(fundo, (0, 0))
+
+        # Desenhar o projetil na posição circular
+        tela.blit(projetil_sprite, (x_projetil - projetil_sprite.get_width() // 2, y_projetil - projetil_sprite.get_height() // 2))
+        
+        # Pulsar do botão "Iniciar"
+        pulsar = 1.05 + 0.05 * math.sin(pygame.time.get_ticks() / 200)
+        texto_pulsante = pygame.transform.scale(texto_iniciar, (int(rect_iniciar.width * pulsar), int(rect_iniciar.height * pulsar)))
+        rect_pulsante = texto_pulsante.get_rect(center=(LARGURA // 2, ALTURA // 2))
+        tela.blit(texto_pulsante, rect_pulsante)
+
         pygame.display.flip()
+
+
 
 def main():
     if not tela_inicio():
