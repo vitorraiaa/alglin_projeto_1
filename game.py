@@ -41,7 +41,7 @@ class Projetil:
         self.velocidade = [0, 0]
         self.movendo = False
 
-        self.imagem = pygame.image.load("img/bola-grena-verde.webp")
+        self.imagem = pygame.image.load("img\download-removebg-preview (1).png")
         self.imagem = pygame.transform.scale(self.imagem, (self.raio * 2, self.raio * 2))
     
     def desenhar(self, tela):
@@ -105,7 +105,7 @@ class Planeta:
         self.y = y
         self.massa = massa
         self.raio = raio
-        self.imagem = pygame.image.load("img\png-clipart-earth-saturn-the-ringed-planet-earth-purple-desktop-wallpaper.png")
+        self.imagem = pygame.image.load("img\png-clipart-earth-saturn-the-ringed-planet-earth-purple-desktop-wallpaper-removebg-preview.png")
         self.imagem = pygame.transform.scale(self.imagem, (self.raio * 2, self.raio * 2))
     
     def desenhar(self, tela):
@@ -143,7 +143,7 @@ def tela_inicio():
     fundo = pygame.transform.scale(fundo, (LARGURA, ALTURA))
     
     # Sprite animado do projetil
-    projetil_sprite = pygame.image.load("img/bola-grena-verde.webp")
+    projetil_sprite = pygame.image.load("img\download-removebg-preview (1).png")
     projetil_sprite = pygame.transform.scale(projetil_sprite, (50, 50))
     
     # Fonte e cor do texto
