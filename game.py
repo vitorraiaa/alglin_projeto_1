@@ -15,7 +15,7 @@ VERDE = (0, 255, 0)
 AMARELO = (255, 255, 0)
 
 GRAVIDADE = 700
-G = 0.6
+G = 4
 
 class Vetor:
     @staticmethod
@@ -40,12 +40,11 @@ class Vetor:
 class Projetil:
     def __init__(self, x, y, sprite):
         self.posicao = [x, y]
-        self.raio = 10
+        self.raio = 20
         self.velocidade = [0, 0]
         self.movendo = False
 
-
-        self.imagem = pygame.image.load("img\download-removebg-preview (1).png")
+        self.imagem = pygame.image.load("img/download-removebg-preview (1).png")
         self.imagem = pygame.transform.scale(self.imagem, (self.raio * 2, self.raio * 2))
     
     def desenhar(self, tela):
@@ -54,12 +53,9 @@ class Projetil:
     
     def atualizar(self, dt):
         if self.movendo:
-
             self.posicao = Vetor.somar(self.posicao, Vetor.escalar(self.velocidade, dt))
-            # Aplicar gravidade ao vetor de velocidade
             gravidade_vetor = [0, GRAVIDADE * dt]
             self.velocidade = Vetor.somar(self.velocidade, gravidade_vetor)
-
     
             if self.posicao[1] + self.raio >= ALTURA:
                 self.movendo = False
@@ -67,7 +63,6 @@ class Projetil:
             if (self.posicao[0] < 0 or self.posicao[0] > LARGURA or
                 self.posicao[1] < 0 or self.posicao[1] > ALTURA):
                 self.movendo = False
-
 
 class Cano:
     def __init__(self, x, y):
@@ -90,20 +85,20 @@ class Cano:
 class Obstaculo:
     def __init__(self, x, y, largura, altura):
         self.rect = pygame.Rect(x, y, largura, altura)
-        self.imagem = pygame.image.load("img\Blue_birds_2.webp")
+        self.imagem = pygame.image.load("img/Blue_birds_2.webp")
         self.imagem = pygame.transform.scale(self.imagem, (largura, altura))
 
     def desenhar(self, tela):
         tela.blit(self.imagem, self.rect.topleft)
 
-
 class Alvo:
     def __init__(self, x, y, largura, altura):
         self.rect = pygame.Rect(x, y, largura, altura)
-        self.cor = VERDE
-    
+        self.imagem = pygame.image.load("img/download-removebg-preview.png")
+        self.imagem = pygame.transform.scale(self.imagem, (largura, altura))
+
     def desenhar(self, tela):
-        pygame.draw.rect(tela, self.cor, self.rect)
+        tela.blit(self.imagem, self.rect.topleft)
 
 class Planeta:
     def __init__(self, x, y, massa, raio):
@@ -111,29 +106,23 @@ class Planeta:
         self.y = y
         self.massa = massa
         self.raio = raio
-        self.imagem = pygame.image.load("img\png-clipart-earth-saturn-the-ringed-planet-earth-purple-desktop-wallpaper-removebg-preview.png")
+        self.imagem = pygame.image.load("img/png-clipart-earth-saturn-the-ringed-planet-earth-purple-desktop-wallpaper-removebg-preview.png")
         self.imagem = pygame.transform.scale(self.imagem, (self.raio * 2, self.raio * 2))
     
     def desenhar(self, tela):
         posicao_imagem = (int(self.x - self.raio), int(self.y - self.raio))
         tela.blit(self.imagem, posicao_imagem)
-
     
     def aplicar_gravidade(self, projetil, dt):
-        # Calcular o vetor direção do planeta para o projétil
         direcao = [self.x - projetil.posicao[0], self.y - projetil.posicao[1]]
         distancia = Vetor.modulo(direcao)
         
         if distancia > 0:
-            # Normalizar o vetor direção
             direcao_normalizada = Vetor.normalizar(direcao)
-            # Calcular a força gravitacional
             forca = G * self.massa / (distancia**2)
-            # Multiplicar a direção normalizada pela força e dt para obter o vetor de aceleração
             aceleracao = Vetor.escalar(direcao_normalizada, forca * dt)
-            # Atualizar a velocidade do projétil
             projetil.velocidade = Vetor.somar(projetil.velocidade, aceleracao)
-    
+
     def verificar_colisao(self, projetil):
         distancia = Vetor.modulo([self.x - projetil.posicao[0], self.y - projetil.posicao[1]])
         return distancia <= self.raio + projetil.raio
@@ -144,23 +133,20 @@ def reiniciar_jogo(projetil, canhao):
     projetil.movendo = False
 
 def tela_inicio():
-    # Carregar uma imagem de fundo
     fundo = pygame.image.load("img/transferir.jpg")
     fundo = pygame.transform.scale(fundo, (LARGURA, ALTURA))
     
-    # Sprite animado do projetil
-    projetil_sprite = pygame.image.load("img\download-removebg-preview (1).png")
+    projetil_sprite = pygame.image.load("img/download-removebg-preview (1).png")
     projetil_sprite = pygame.transform.scale(projetil_sprite, (50, 50))
     
-    # Fonte e cor do texto
     fonte = pygame.font.Font(None, 74)
-    texto_iniciar = fonte.render("Iniciar", True, BRANCO)
+    texto_iniciar = fonte.render("Iniciar", True, PRETO)
     rect_iniciar = texto_iniciar.get_rect(center=(LARGURA // 2, ALTURA // 2))
 
     rodando = True
     angulo_projetil = 0
     raio_circulo = 100
-    velocidade_angular = 0.0005  # Velocidade de movimento circular
+    velocidade_angular = 0.0005
     
     while rodando:
         for evento in pygame.event.get():
@@ -171,26 +157,19 @@ def tela_inicio():
                 if rect_iniciar.collidepoint(evento.pos):
                     return True
 
-        # Atualizar ângulo e posição circular
         angulo_projetil += velocidade_angular
         x_projetil = LARGURA // 2 + raio_circulo * math.cos(angulo_projetil)
         y_projetil = ALTURA // 2 + raio_circulo * math.sin(angulo_projetil)
 
-        # Desenhar na tela
         tela.blit(fundo, (0, 0))
-
-        # Desenhar o projetil na posição circular
         tela.blit(projetil_sprite, (x_projetil - projetil_sprite.get_width() // 2, y_projetil - projetil_sprite.get_height() // 2))
         
-        # Pulsar do botão "Iniciar"
         pulsar = 1.05 + 0.05 * math.sin(pygame.time.get_ticks() / 200)
         texto_pulsante = pygame.transform.scale(texto_iniciar, (int(rect_iniciar.width * pulsar), int(rect_iniciar.height * pulsar)))
         rect_pulsante = texto_pulsante.get_rect(center=(LARGURA // 2, ALTURA // 2))
         tela.blit(texto_pulsante, rect_pulsante)
 
         pygame.display.flip()
-
-
 
 def main():
     if not tela_inicio():
@@ -199,20 +178,22 @@ def main():
     relogio = pygame.time.Clock()
     rodando = True
     
-    # Carregar a sprite
+    fundo = pygame.image.load("img/Space-Free-PNG-Image.png")
+    fundo = pygame.transform.scale(fundo, (LARGURA, ALTURA))
+    
     sprite_projetil = pygame.image.load('angry_birds.png').convert_alpha()
     
     canhao = Cano(100, ALTURA - 100)
     projetil = Projetil(canhao.x, canhao.y, sprite_projetil)
     
     obstaculos = [
-        Obstaculo(400, ALTURA - 150, 50, 150),
-        Obstaculo(600, ALTURA - 200, 50, 200)
+        Obstaculo(400, ALTURA - 300, 50, 150),
+        Obstaculo(550, ALTURA - 350, 50, 200)
     ]
     
-    alvo = Alvo(750, ALTURA - 50, 50, 50)
+    alvo = Alvo(750, 30, 50, 50)
     
-    planeta = Planeta(500, ALTURA // 2, massa=5e6, raio=30)
+    planeta = Planeta(500, 100, massa=5e6, raio=50)
     
     while rodando:
         dt = relogio.tick(60) / 1000.0
@@ -223,21 +204,14 @@ def main():
             elif evento.type == pygame.MOUSEBUTTONDOWN and not projetil.movendo:
                 pos_mouse = pygame.mouse.get_pos()
                 canhao.ajustar_angulo(pos_mouse)
-                
 
-                # Definir vetor de direção baseado no ângulo do canhão
                 direcao = [math.cos(canhao.angulo), -math.sin(canhao.angulo)]
-                # Normalizar o vetor direção
                 direcao_normalizada = Vetor.normalizar(direcao)
-                # Definir a potência do tiro
                 distancia_horizontal = max(100, pos_mouse[0] - canhao.x) + 200
                 potencia = min(1000, distancia_horizontal) + 200
-                # Multiplicar a direção normalizada pela potência para obter a velocidade inicial
-
                 projetil.velocidade = Vetor.escalar(direcao_normalizada, potencia)
                 projetil.movendo = True
 
-        
         if projetil.movendo:
             planeta.aplicar_gravidade(projetil, dt)
         
@@ -246,7 +220,7 @@ def main():
         if not projetil.movendo:
             reiniciar_jogo(projetil, canhao)
         
-        tela.fill(PRETO)
+        tela.blit(fundo, (0, 0))  # Desenha o fundo antes de todos os outros elementos
         canhao.desenhar(tela)
         projetil.desenhar(tela)
         alvo.desenhar(tela)
