@@ -1,7 +1,6 @@
+import os
 import math
 import pygame
-import os
-import pkg_resources  # Para carregar recursos corretamente
 
 pygame.init()
 
@@ -18,6 +17,9 @@ AMARELO = (255, 255, 0)
 
 GRAVIDADE = 700
 G = 4
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMG_DIR = os.path.join(BASE_DIR, "img")
 
 class Vetor:
     @staticmethod
@@ -40,13 +42,13 @@ class Vetor:
         return [vetor1[0] + vetor2[0], vetor1[1] + vetor2[1]]
 
 class Projetil:
-    def __init__(self, x, y):
+    def __init__(self, x, y, sprite):
         self.posicao = [x, y]
         self.raio = 20
         self.velocidade = [0, 0]
         self.movendo = False
 
-        self.imagem = carregar_imagem("angry_birds/img/download-removebg-preview (1).png")
+        self.imagem = pygame.image.load(os.path.join(IMG_DIR, "download-removebg-preview (1).png"))
         self.imagem = pygame.transform.scale(self.imagem, (self.raio * 2, self.raio * 2))
     
     def desenhar(self, tela):
@@ -87,7 +89,7 @@ class Cano:
 class Obstaculo:
     def __init__(self, x, y, largura, altura):
         self.rect = pygame.Rect(x, y, largura, altura)
-        self.imagem = carregar_imagem("angry_birds/img/Blue_birds_2.webp")
+        self.imagem = pygame.image.load(os.path.join(IMG_DIR, "Blue_birds_2.webp"))
         self.imagem = pygame.transform.scale(self.imagem, (largura, altura))
 
     def desenhar(self, tela):
@@ -96,7 +98,7 @@ class Obstaculo:
 class Alvo:
     def __init__(self, x, y, largura, altura):
         self.rect = pygame.Rect(x, y, largura, altura)
-        self.imagem = carregar_imagem("angry_birds/img/download-removebg-preview.png")
+        self.imagem = pygame.image.load(os.path.join(IMG_DIR, "download-removebg-preview.png"))
         self.imagem = pygame.transform.scale(self.imagem, (largura, altura))
 
     def desenhar(self, tela):
@@ -108,7 +110,7 @@ class Planeta:
         self.y = y
         self.massa = massa
         self.raio = raio
-        self.imagem = carregar_imagem("angry_birds/img/png-clipart-earth-saturn-the-ringed-planet-earth-purple-desktop-wallpaper-removebg-preview.png")
+        self.imagem = pygame.image.load(os.path.join(IMG_DIR, "png-clipart-earth-saturn-the-ringed-planet-earth-purple-desktop-wallpaper-removebg-preview.png"))
         self.imagem = pygame.transform.scale(self.imagem, (self.raio * 2, self.raio * 2))
     
     def desenhar(self, tela):
@@ -135,15 +137,17 @@ def reiniciar_jogo(projetil, canhao):
     projetil.movendo = False
 
 def tela_inicio():
-    fundo = carregar_imagem("angry_birds/img/transferir.jpg")
+    fundo = pygame.image.load(os.path.join(IMG_DIR, "transferir.jpg"))
     fundo = pygame.transform.scale(fundo, (LARGURA, ALTURA))
     
-    projetil_sprite = carregar_imagem("angry_birds/img/download-removebg-preview (1).png")
+    projetil_sprite = pygame.image.load(os.path.join(IMG_DIR, "download-removebg-preview (1).png"))
     projetil_sprite = pygame.transform.scale(projetil_sprite, (50, 50))
     
     fonte = pygame.font.Font(None, 74)
     texto_iniciar = fonte.render("Iniciar", True, PRETO)
+    texto_instrucoes = fonte.render("Instruções", True, VERMELHO)
     rect_iniciar = texto_iniciar.get_rect(center=(LARGURA // 2, ALTURA // 2))
+    rect_instrucoes = texto_instrucoes.get_rect(center=(LARGURA // 2, ALTURA // 2 + 100))
 
     rodando = True
     angulo_projetil = 0
@@ -154,10 +158,12 @@ def tela_inicio():
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 pygame.quit()
-                return False
+                return False, False
             elif evento.type == pygame.MOUSEBUTTONDOWN:
                 if rect_iniciar.collidepoint(evento.pos):
-                    return True
+                    return True, False
+                elif rect_instrucoes.collidepoint(evento.pos):
+                    return False, True
 
         angulo_projetil += velocidade_angular
         x_projetil = LARGURA // 2 + raio_circulo * math.cos(angulo_projetil)
@@ -170,21 +176,21 @@ def tela_inicio():
         texto_pulsante = pygame.transform.scale(texto_iniciar, (int(rect_iniciar.width * pulsar), int(rect_iniciar.height * pulsar)))
         rect_pulsante = texto_pulsante.get_rect(center=(LARGURA // 2, ALTURA // 2))
         tela.blit(texto_pulsante, rect_pulsante)
+        tela.blit(texto_instrucoes, rect_instrucoes)
 
         pygame.display.flip()
 
-def tela_parabens():
-    fundo = carregar_imagem("angry_birds/img/transferir.jpg")
-    fundo = pygame.transform.scale(fundo, (LARGURA, ALTURA))
-    
-    fonte = pygame.font.Font(None, 74)
-    texto_parabens = fonte.render("Parabéns, você venceu!", True, VERDE)
-    rect_parabens = texto_parabens.get_rect(center=(LARGURA // 2, ALTURA // 2 - 50))
-    
-    texto_reiniciar = fonte.render("Clique para reiniciar", True, BRANCO)
-    rect_reiniciar = texto_reiniciar.get_rect(center=(LARGURA // 2, ALTURA // 2 + 50))
-    
+def tela_instrucoes():
+    fonte = pygame.font.Font(None, 36)
+    texto_instrucoes = [
+        "1. Use o mouse para ajustar o ângulo do canhão.",
+        "2. Clique para lançar o projétil.",
+        "3. Evite os obstáculos e alcance o alvo.",
+        "4. A gravidade do planeta pode afetar a trajetória.",
+        "5. Boa sorte!"
+    ]
     rodando = True
+    
     while rodando:
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
@@ -193,62 +199,112 @@ def tela_parabens():
             elif evento.type == pygame.MOUSEBUTTONDOWN:
                 return True
 
-        tela.blit(fundo, (0, 0))
-        tela.blit(texto_parabens, rect_parabens)
-        tela.blit(texto_reiniciar, rect_reiniciar)
+        tela.fill(PRETO)
+        for i, linha in enumerate(texto_instrucoes):
+            texto = fonte.render(linha, True, BRANCO)
+            tela.blit(texto, (50, 100 + i * 50))
+
+        fonte_voltar = pygame.font.Font(None, 50)
+        texto_voltar = fonte_voltar.render("Clique para voltar", True, BRANCO)
+        rect_voltar = texto_voltar.get_rect(center=(LARGURA // 2, ALTURA - 50))
+        tela.blit(texto_voltar, rect_voltar)
 
         pygame.display.flip()
 
-def carregar_imagem(caminho_relativo):
-    caminho_absoluto = pkg_resources.resource_filename(__name__, caminho_relativo)
-    return pygame.image.load(caminho_absoluto)
+def tela_sucesso():
+    fonte = pygame.font.Font(None, 74)
+    texto_sucesso = fonte.render("Parabéns! Você venceu!", True, VERDE)
+    rodando = True
+    
+    while rodando:
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                return False
+            elif evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
+                    return True
+
+        tela.fill(PRETO)
+        rect_sucesso = texto_sucesso.get_rect(center=(LARGURA // 2, ALTURA // 2))
+        tela.blit(texto_sucesso, rect_sucesso)
+        pygame.display.flip()
 
 def main():
-    rodando = True
+    jogando, instrucoes = tela_inicio()
+    if instrucoes:
+        tela_instrucoes()
+        jogando, _ = tela_inicio()
+    if not jogando:
+        return
+
     relogio = pygame.time.Clock()
-
-    canhao = Cano(100, ALTURA - 100)
-    projetil = Projetil(canhao.x, canhao.y)
-    planeta = Planeta(400, 300, 1000000, 50)
+    rodando = True
     
-    obstaculo = Obstaculo(300, ALTURA - 100, 50, 100)
-    alvo = Alvo(LARGURA - 100, ALTURA - 100, 50, 100)
-
-    jogo_iniciado = tela_inicio()
-
-    while rodando and jogo_iniciado:
+    fundo = pygame.image.load(os.path.join(IMG_DIR, "Space-Free-PNG-Image.png"))
+    fundo = pygame.transform.scale(fundo, (LARGURA, ALTURA))
+    
+    sprite_projetil = pygame.image.load(os.path.join(IMG_DIR, 'angry_birds.png')).convert_alpha()
+    
+    canhao = Cano(100, ALTURA - 100)
+    projetil = Projetil(canhao.x, canhao.y, sprite_projetil)
+    
+    obstaculos = [
+        Obstaculo(400, ALTURA - 300, 50, 150),
+        Obstaculo(550, ALTURA - 350, 50, 200)
+    ]
+    
+    alvo = Alvo(750, 30, 50, 50)
+    
+    planeta = Planeta(500, 100, massa=5e6, raio=50)
+    
+    while rodando:
         dt = relogio.tick(60) / 1000.0
-
+        
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 rodando = False
             elif evento.type == pygame.MOUSEBUTTONDOWN and not projetil.movendo:
+                pos_mouse = pygame.mouse.get_pos()
+                canhao.ajustar_angulo(pos_mouse)
+
+                direcao = [math.cos(canhao.angulo), -math.sin(canhao.angulo)]
+                direcao_normalizada = Vetor.normalizar(direcao)
+                distancia_horizontal = max(100, pos_mouse[0] - canhao.x) + 200
+                potencia = min(1000, distancia_horizontal) + 200
+                projetil.velocidade = Vetor.escalar(direcao_normalizada, potencia)
                 projetil.movendo = True
-                velocidade_inicial = 500
-                projetil.velocidade = [velocidade_inicial * math.cos(canhao.angulo), -velocidade_inicial * math.sin(canhao.angulo)]
 
         if projetil.movendo:
             planeta.aplicar_gravidade(projetil, dt)
-
-        if planeta.verificar_colisao(projetil):
-            reiniciar_jogo(projetil, canhao)
-
+        
         projetil.atualizar(dt)
-        canhao.ajustar_angulo(pygame.mouse.get_pos())
-
-        tela.fill(PRETO)
-
-        planeta.desenhar(tela)
-        obstaculo.desenhar(tela)
-        alvo.desenhar(tela)
-        projetil.desenhar(tela)
+        
+        if not projetil.movendo:
+            reiniciar_jogo(projetil, canhao)
+        
+        tela.blit(fundo, (0, 0))  # Desenha o fundo antes de todos os outros elementos
         canhao.desenhar(tela)
-
+        projetil.desenhar(tela)
+        alvo.desenhar(tela)
+        
+        planeta.desenhar(tela)
+        
+        for obstaculo in obstaculos:
+            obstaculo.desenhar(tela)
+            if projetil.movendo and obstaculo.rect.colliderect(pygame.Rect(projetil.posicao[0] - projetil.raio, projetil.posicao[1] - projetil.raio, projetil.raio*2, projetil.raio*2)):
+                reiniciar_jogo(projetil, canhao)
+        
+        if projetil.movendo and planeta.verificar_colisao(projetil):
+            reiniciar_jogo(projetil, canhao)
+        
+        if projetil.movendo and alvo.rect.colliderect(pygame.Rect(projetil.posicao[0] - projetil.raio, projetil.posicao[1] - projetil.raio, projetil.raio*2, projetil.raio*2)):
+            rodando = False
+            tela_sucesso()
+        
         pygame.display.flip()
 
-        if projetil.rect.colliderect(alvo.rect):
-            jogo_iniciado = tela_parabens()
-            reiniciar_jogo(projetil, canhao)
+    pygame.quit()
 
 if __name__ == "__main__":
     main()
